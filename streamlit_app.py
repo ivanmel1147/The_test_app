@@ -221,6 +221,26 @@ st.button(
 
 
 # -----------------------------------------------------------------------------
+# Display an uploaded Excel workbook.
+
+st.subheader("View an Excel file", divider="green")
+
+uploaded_excel = st.file_uploader(
+    "Upload an .xlsx file",
+    type=["xlsx"],
+)
+
+if uploaded_excel is not None:
+    try:
+        excel_file = pd.ExcelFile(uploaded_excel)
+        selected_sheet = st.selectbox("Choose a worksheet", excel_file.sheet_names)
+        excel_df = pd.read_excel(excel_file, sheet_name=selected_sheet)
+        st.dataframe(excel_df, use_container_width=True)
+    except (ValueError, OSError) as error:
+        st.error(f"Unable to read this Excel file: {error}")
+
+
+# -----------------------------------------------------------------------------
 # Now some cool charts
 
 # Add some space
