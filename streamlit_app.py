@@ -1,4 +1,5 @@
 from collections import defaultdict
+from io import BytesIO
 from pathlib import Path
 import sqlite3
 
@@ -200,8 +201,24 @@ if uploaded_excel is not None:
         excel_file = pd.ExcelFile(uploaded_excel)
         selected_sheet = st.selectbox("Choose a worksheet", excel_file.sheet_names)
         excel_df = pd.read_excel(excel_file, sheet_name=selected_sheet)
-        st.dataframe(excel_df, use_container_width=True)
-    except (ValueError, OSError) as error:
+        edited_excel_df = st.data_editor(
+            excel_df,
+            num_rows="dynamic",
+            use_container_width=True,
+            key=f"excel_editor_{selected_sheet}",
+        )
+
+        edited_workbook = BytesIO()
+        with pd.ExcelWriter(edited_workbook, engine="openpyxl") as writer:
+            edited_excel_df.to_excel(writer, sheet_name=selected_sheet, index=False)
+
+        st.download_button(
+            "Download edited worksheet",
+            data=edited_workbook.getvalue(),
+            file_name=f"{selected_sheet}_edited.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+    except (ImportError, ValueError, OSError) as error:
         st.error(f"Unable to read this Excel file: {error}")
 
 # Connect to database and create table if needed
